@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTubeChatLive 設定</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <header class="popup-header">
+    <div class="brand">
+      <i class="fa-brands fa-youtube logo-icon"></i>
+      <span>YouTubeChatLive</span>
+    </div>
+    <!-- Main Toggle Switch -->
+    <label class="switch" title="コメント流し ON / OFF">
+      <input type="checkbox" id="enabledToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <main class="popup-body">
+    <!-- Display Mode Selector -->
+    <div class="form-group">
+      <label for="displayMode"><i class="fa-solid fa-layer-group"></i> 表示形式 (モード)</label>
+      <select id="displayMode">
+        <option value="flow" selected>右から左へ流す (標準弾幕)</option>
+        <option value="left-fixed">左側に固定表示 (左固定ストリーム)</option>
+        <option value="top-bottom-fixed">上下中央に固定表示 (中央固定)</option>
+      </select>
+    </div>
+
+    <!-- Max Comments Count Slider -->
+    <div class="form-group">
+      <label for="maxComments"><i class="fa-solid fa-list-ol"></i> 最大同時表示数 (<span id="maxCommentsVal">20</span>件)</label>
+      <input type="range" id="maxComments" min="3" max="60" value="20" step="1">
+    </div>
+
+    <div class="form-group">
+      <label for="fontSize"><i class="fa-solid fa-text-height"></i> 文字サイズ (<span id="fontSizeVal">42</span>px)</label>
+      <input type="range" id="fontSize" min="20" max="80" value="42" step="2">
+    </div>
+
+    <div class="form-group">
+      <label for="flowSpeed"><i class="fa-solid fa-gauge"></i> 表示時間 / 速度 (<span id="flowSpeedVal">5.0</span>秒)</label>
+      <input type="range" id="flowSpeed" min="2.0" max="10.0" value="5.0" step="0.5">
+    </div>
+
+    <div class="form-group">
+      <label for="screenArea"><i class="fa-solid fa-table-cells-large"></i> コメント表示範囲</label>
+      <select id="screenArea">
+        <option value="1.0" selected>画面全体 (100%)</option>
+        <option value="0.75">上部 75%</option>
+        <option value="0.5">上部 50%</option>
+        <option value="0.33">上部 33%</option>
+      </select>
+    </div>
+
+    <div class="grid-2col">
+      <div class="form-group">
+        <label for="strokeColor"><i class="fa-solid fa-border-all"></i> 縁取り色</label>
+        <div class="color-picker">
+          <input type="color" id="strokeColor" value="#000000">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="strokeWidth"><i class="fa-solid fa-bold"></i> 縁取り (<span id="strokeWidthVal">6</span>px)</label>
+        <input type="range" id="strokeWidth" min="0" max="12" value="6" step="1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="opacity"><i class="fa-solid fa-eye"></i> 透明度 (<span id="opacityVal">100</span>%)</label>
+      <input type="range" id="opacity" min="30" max="100" value="100" step="5">
+    </div>
+
+    <hr class="divider">
+
+    <div class="btn-group">
+      <button id="testCommentBtn" class="btn btn-secondary"><i class="fa-solid fa-vial"></i> テストコメント表示（レイアウト確認用）</button>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>
