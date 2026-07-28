@@ -1,0 +1,96 @@
+{
+  "extensionName": {
+    "message": "KomeFlow – Live Comment Overlay",
+    "description": "拡張機能名"
+  },
+  "extensionDescription": {
+    "message": "YouTube™のライブ配信・動画で、チャットコメントを流す／固定表示する独立開発のオーバーレイ拡張機能です。"
+  },
+  "mainToggleTitle": {
+    "message": "コメント表示 ON / OFF"
+  },
+  "displayModeLabel": {
+    "message": "表示形式（モード）"
+  },
+  "modeFlow": {
+    "message": "右から左へ流す（標準弾幕）"
+  },
+  "modeLeftFixed": {
+    "message": "左側に固定表示"
+  },
+  "modeCenterFixed": {
+    "message": "上下中央に固定表示"
+  },
+  "maxCommentsLabel": {
+    "message": "最大同時表示数"
+  },
+  "commentsUnit": {
+    "message": "件"
+  },
+  "fontSizeLabel": {
+    "message": "文字サイズ"
+  },
+  "flowSpeedLabel": {
+    "message": "表示時間／速度"
+  },
+  "secondsUnit": {
+    "message": "秒"
+  },
+  "screenAreaLabel": {
+    "message": "コメント表示範囲"
+  },
+  "screenAreaFull": {
+    "message": "画面全体（100%）"
+  },
+  "screenArea75": {
+    "message": "上部 75%"
+  },
+  "screenArea50": {
+    "message": "上部 50%"
+  },
+  "screenArea33": {
+    "message": "上部 33%"
+  },
+  "timeShiftLabel": {
+    "message": "DVRタイムシフト同期"
+  },
+  "timeShiftDescription": {
+    "message": "配信中に保存したコメントを巻き戻し位置に合わせて表示"
+  },
+  "timeShiftTitle": {
+    "message": "DVRタイムシフト同期 ON / OFF"
+  },
+  "timeShiftPrivacyNotice": {
+    "message": "有効にすると、動画ID、チャット本文、メッセージID、再生時刻を最大6時間端末内に保存します。開発者や第三者には送信しません。"
+  },
+  "timeShiftConsentPrompt": {
+    "message": "DVRタイムシフト同期を有効にしますか？動画ID、チャット本文、メッセージID、再生時刻を最大6時間端末内に保存します。開発者や第三者には送信しません。"
+  },
+  "clearDataButton": {
+    "message": "DVRを無効化して保存コメントを削除"
+  },
+  "clearingDataStatus": {
+    "message": "保存コメントを削除しています…"
+  },
+  "clearDataSuccess": {
+    "message": "保存コメントを削除しました。"
+  },
+  "clearDataError": {
+    "message": "保存コメントを削除できませんでした。もう一度お試しください。"
+  },
+  "strokeColorLabel": {
+    "message": "縁取り色"
+  },
+  "strokeWidthLabel": {
+    "message": "縁取り"
+  },
+  "opacityLabel": {
+    "message": "透明度"
+  },
+  "testCommentButton": {
+    "message": "テストコメント表示（レイアウト確認用）"
+  },
+  "legalNote": {
+    "message": "YouTube は Google LLC の商標です。KomeFlow は独立開発の拡張機能であり、Google LLC または YouTube の公式製品ではありません。"
+  }
+}

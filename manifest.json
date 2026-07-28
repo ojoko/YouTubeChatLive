@@ -1,8 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "YouTubeChatLive - 弾幕コメント表示",
-  "version": "1.2.0",
-  "description": "YouTubeのライブ配信・動画上でチャットコメントを画面上に流す/固定表示するChrome拡張機能です。",
+  "name": "__MSG_extensionName__",
+  "version": "1.7.0",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
+  "minimum_chrome_version": "93",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "storage"
   ],
@@ -14,7 +22,11 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "YouTubeChatLive 設定"
+    "default_title": "__MSG_extensionName__",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
   },
   "content_scripts": [
     {

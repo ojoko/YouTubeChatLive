@@ -1,0 +1,96 @@
+{
+  "extensionName": {
+    "message": "KomeFlow – Live Comment Overlay",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Overlay YouTube live chat and replay comments on videos with flowing or fixed display modes and local DVR synchronization."
+  },
+  "mainToggleTitle": {
+    "message": "Comment overlay ON / OFF"
+  },
+  "displayModeLabel": {
+    "message": "Display mode"
+  },
+  "modeFlow": {
+    "message": "Flow from right to left"
+  },
+  "modeLeftFixed": {
+    "message": "Fixed on the left"
+  },
+  "modeCenterFixed": {
+    "message": "Fixed in the center"
+  },
+  "maxCommentsLabel": {
+    "message": "Maximum simultaneous comments"
+  },
+  "commentsUnit": {
+    "message": " comments"
+  },
+  "fontSizeLabel": {
+    "message": "Font size"
+  },
+  "flowSpeedLabel": {
+    "message": "Display duration / speed"
+  },
+  "secondsUnit": {
+    "message": "s"
+  },
+  "screenAreaLabel": {
+    "message": "Comment display area"
+  },
+  "screenAreaFull": {
+    "message": "Full screen (100%)"
+  },
+  "screenArea75": {
+    "message": "Top 75%"
+  },
+  "screenArea50": {
+    "message": "Top 50%"
+  },
+  "screenArea33": {
+    "message": "Top 33%"
+  },
+  "timeShiftLabel": {
+    "message": "DVR time-shift sync"
+  },
+  "timeShiftDescription": {
+    "message": "Replay locally saved live comments at their original playback time"
+  },
+  "timeShiftTitle": {
+    "message": "DVR time-shift sync ON / OFF"
+  },
+  "timeShiftPrivacyNotice": {
+    "message": "When enabled, KomeFlow stores video IDs, chat text, message IDs and playback timestamps locally for up to six hours. This data is never sent to the developer or third parties."
+  },
+  "timeShiftConsentPrompt": {
+    "message": "Enable DVR time-shift sync? KomeFlow will store video IDs, chat text, message IDs and playback timestamps locally for up to six hours. The data is not sent to the developer or third parties."
+  },
+  "clearDataButton": {
+    "message": "Disable DVR and delete saved comments"
+  },
+  "clearingDataStatus": {
+    "message": "Deleting saved comments…"
+  },
+  "clearDataSuccess": {
+    "message": "Saved comments were deleted."
+  },
+  "clearDataError": {
+    "message": "Could not delete saved comments. Please try again."
+  },
+  "strokeColorLabel": {
+    "message": "Outline color"
+  },
+  "strokeWidthLabel": {
+    "message": "Outline width"
+  },
+  "opacityLabel": {
+    "message": "Opacity"
+  },
+  "testCommentButton": {
+    "message": "Show a test comment"
+  },
+  "legalNote": {
+    "message": "YouTube is a trademark of Google LLC. KomeFlow is independently developed and is not an official Google LLC or YouTube product."
+  }
+}

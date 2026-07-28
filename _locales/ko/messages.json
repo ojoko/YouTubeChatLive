@@ -1,0 +1,96 @@
+{
+  "extensionName": {
+    "message": "KomeFlow – 라이브 댓글 오버레이",
+    "description": "확장 프로그램 이름"
+  },
+  "extensionDescription": {
+    "message": "YouTube 라이브 방송과 동영상의 채팅 댓글을 흐르거나 고정된 형태로 표시하고 로컬 DVR 동기화를 지원합니다."
+  },
+  "mainToggleTitle": {
+    "message": "댓글 오버레이 켜기 / 끄기"
+  },
+  "displayModeLabel": {
+    "message": "표시 모드"
+  },
+  "modeFlow": {
+    "message": "오른쪽에서 왼쪽으로 흐르기"
+  },
+  "modeLeftFixed": {
+    "message": "왼쪽에 고정"
+  },
+  "modeCenterFixed": {
+    "message": "화면 중앙에 고정"
+  },
+  "maxCommentsLabel": {
+    "message": "최대 동시 표시 댓글 수"
+  },
+  "commentsUnit": {
+    "message": "개"
+  },
+  "fontSizeLabel": {
+    "message": "글자 크기"
+  },
+  "flowSpeedLabel": {
+    "message": "표시 시간 / 속도"
+  },
+  "secondsUnit": {
+    "message": "초"
+  },
+  "screenAreaLabel": {
+    "message": "댓글 표시 영역"
+  },
+  "screenAreaFull": {
+    "message": "전체 화면 (100%)"
+  },
+  "screenArea75": {
+    "message": "상단 75%"
+  },
+  "screenArea50": {
+    "message": "상단 50%"
+  },
+  "screenArea33": {
+    "message": "상단 33%"
+  },
+  "timeShiftLabel": {
+    "message": "DVR 타임시프트 동기화"
+  },
+  "timeShiftDescription": {
+    "message": "로컬에 저장한 라이브 댓글을 원래 재생 시간에 맞춰 표시합니다"
+  },
+  "timeShiftTitle": {
+    "message": "DVR 타임시프트 동기화 켜기 / 끄기"
+  },
+  "timeShiftPrivacyNotice": {
+    "message": "활성화하면 KomeFlow가 동영상 ID, 채팅 내용, 메시지 ID와 재생 시각을 최대 6시간 동안 기기에 저장합니다. 이 데이터는 개발자나 제3자에게 전송되지 않습니다."
+  },
+  "timeShiftConsentPrompt": {
+    "message": "DVR 타임시프트 동기화를 활성화할까요? 동영상 ID, 채팅 내용, 메시지 ID와 재생 시각이 최대 6시간 동안 기기에 저장되며 개발자나 제3자에게 전송되지 않습니다."
+  },
+  "clearDataButton": {
+    "message": "DVR을 끄고 저장된 댓글 삭제"
+  },
+  "clearingDataStatus": {
+    "message": "저장된 댓글을 삭제하는 중…"
+  },
+  "clearDataSuccess": {
+    "message": "저장된 댓글을 삭제했습니다."
+  },
+  "clearDataError": {
+    "message": "저장된 댓글을 삭제하지 못했습니다. 다시 시도해 주세요."
+  },
+  "strokeColorLabel": {
+    "message": "외곽선 색상"
+  },
+  "strokeWidthLabel": {
+    "message": "외곽선 두께"
+  },
+  "opacityLabel": {
+    "message": "불투명도"
+  },
+  "testCommentButton": {
+    "message": "테스트 댓글 표시"
+  },
+  "legalNote": {
+    "message": "YouTube는 Google LLC의 상표입니다. KomeFlow는 독립적으로 개발되었으며 Google LLC 또는 YouTube의 공식 제품이 아닙니다."
+  }
+}
