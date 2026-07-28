@@ -1,0 +1,96 @@
+{
+  "extensionName": {
+    "message": "KomeFlow – 直播评论浮层",
+    "description": "扩展程序名称"
+  },
+  "extensionDescription": {
+    "message": "在 YouTube 直播和视频上以滚动或固定方式显示聊天评论，并支持本地 DVR 同步。"
+  },
+  "mainToggleTitle": {
+    "message": "开启 / 关闭评论浮层"
+  },
+  "displayModeLabel": {
+    "message": "显示模式"
+  },
+  "modeFlow": {
+    "message": "从右向左滚动"
+  },
+  "modeLeftFixed": {
+    "message": "固定在左侧"
+  },
+  "modeCenterFixed": {
+    "message": "固定在画面中央"
+  },
+  "maxCommentsLabel": {
+    "message": "最大同时显示数"
+  },
+  "commentsUnit": {
+    "message": "条"
+  },
+  "fontSizeLabel": {
+    "message": "字体大小"
+  },
+  "flowSpeedLabel": {
+    "message": "显示时间 / 速度"
+  },
+  "secondsUnit": {
+    "message": "秒"
+  },
+  "screenAreaLabel": {
+    "message": "评论显示区域"
+  },
+  "screenAreaFull": {
+    "message": "整个画面 (100%)"
+  },
+  "screenArea75": {
+    "message": "顶部 75%"
+  },
+  "screenArea50": {
+    "message": "顶部 50%"
+  },
+  "screenArea33": {
+    "message": "顶部 33%"
+  },
+  "timeShiftLabel": {
+    "message": "DVR 时移同步"
+  },
+  "timeShiftDescription": {
+    "message": "按照原始播放时间显示本地保存的直播评论"
+  },
+  "timeShiftTitle": {
+    "message": "开启 / 关闭 DVR 时移同步"
+  },
+  "timeShiftPrivacyNotice": {
+    "message": "启用后，KomeFlow 会在设备本地保存视频 ID、聊天文本、消息 ID 和播放时间，最长六小时。数据不会发送给开发者或第三方。"
+  },
+  "timeShiftConsentPrompt": {
+    "message": "是否启用 DVR 时移同步？KomeFlow 会在设备本地保存视频 ID、聊天文本、消息 ID 和播放时间，最长六小时，且不会发送给开发者或第三方。"
+  },
+  "clearDataButton": {
+    "message": "关闭 DVR 并删除已保存评论"
+  },
+  "clearingDataStatus": {
+    "message": "正在删除已保存评论…"
+  },
+  "clearDataSuccess": {
+    "message": "已删除保存的评论。"
+  },
+  "clearDataError": {
+    "message": "无法删除保存的评论，请重试。"
+  },
+  "strokeColorLabel": {
+    "message": "描边颜色"
+  },
+  "strokeWidthLabel": {
+    "message": "描边宽度"
+  },
+  "opacityLabel": {
+    "message": "不透明度"
+  },
+  "testCommentButton": {
+    "message": "显示测试评论"
+  },
+  "legalNote": {
+    "message": "YouTube 是 Google LLC 的商标。KomeFlow 为独立开发，并非 Google LLC 或 YouTube 的官方产品。"
+  }
+}

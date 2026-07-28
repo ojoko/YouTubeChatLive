@@ -1,16 +1,21 @@
 /**
- * YouTube Live NicoNico Comment Extension - Content Script (Main Page)
+ * KomeFlow live-comment overlay - Content Script (Main Page)
  * Includes Hidden Chat Frame Fallback so comments flow even when Chat Sidebar is CLOSED/HIDDEN or in Fullscreen.
  */
 
 (function () {
   'use strict';
 
-  if (window.__niconico_extension_injected) return;
-  window.__niconico_extension_injected = true;
+  if (window.__komeflow_extension_injected) return;
+  window.__komeflow_extension_injected = true;
+
+  function clampNumber(value, min, max, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+  }
 
   /* ==========================================================================
-     GPU Compositor Accelerated NicoNico Engine
+     GPU-accelerated KomeFlow rendering engine
      ========================================================================== */
   class GPUCompositorEngine {
     constructor(overlayContainer, playerContainer) {
@@ -18,6 +23,7 @@
       this.container = playerContainer;
 
       this.lanes = [];
+      this.animations = new Set();
 
       this.config = {
         enabled: true,
@@ -64,7 +70,20 @@
     }
 
     setConfig(newConfig) {
-      this.config = { ...this.config, ...newConfig };
+      const next = { ...this.config, ...newConfig };
+      this.config = {
+        enabled: typeof next.enabled === 'boolean' ? next.enabled : true,
+        displayMode: ['flow', 'left-fixed', 'top-bottom-fixed'].includes(next.displayMode)
+          ? next.displayMode
+          : 'flow',
+        maxComments: Math.round(clampNumber(next.maxComments, 3, 60, 20)),
+        fontSize: Math.round(clampNumber(next.fontSize, 20, 80, 42)),
+        flowDuration: clampNumber(next.flowDuration, 2, 10, 5),
+        strokeColor: /^#[0-9a-f]{6}$/i.test(next.strokeColor) ? next.strokeColor : '#000000',
+        strokeWidth: Math.round(clampNumber(next.strokeWidth, 0, 12, 6)),
+        displayArea: clampNumber(next.displayArea, 0.33, 1, 1),
+        opacity: clampNumber(next.opacity, 0.3, 1, 1)
+      };
       this.updateLanesCount();
 
       if (this.overlay) {
@@ -98,8 +117,41 @@
     }
 
     measureTextWidth(text, fontSize) {
-      this.measureCtx.font = `800 ${fontSize}px 'M PLUS Rounded 1c', sans-serif`;
+      this.measureCtx.font = `800 ${fontSize}px 'Yu Gothic UI', 'Meiryo', sans-serif`;
       return Math.max(30, this.measureCtx.measureText(text).width);
+    }
+
+    animateComment(commentEl, keyframes, timing) {
+      const animation = commentEl.animate(keyframes, timing);
+      this.animations.add(animation);
+
+      let cleaned = false;
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        this.animations.delete(animation);
+        commentEl.remove();
+        this.activeCount = Math.max(0, this.activeCount - 1);
+      };
+
+      animation.addEventListener('finish', cleanup, { once: true });
+      animation.addEventListener('cancel', cleanup, { once: true });
+      return animation;
+    }
+
+    clearComments() {
+      for (const animation of [...this.animations]) {
+        animation.cancel();
+      }
+      this.animations.clear();
+      this.overlay?.querySelectorAll('.komeflow-comment').forEach((node) => node.remove());
+      this.activeCount = 0;
+      this.lanes.fill(null);
+    }
+
+    destroy() {
+      this.clearComments();
+      this.lanes = [];
     }
 
     addComment(rawText, options = {}) {
@@ -107,6 +159,8 @@
       if (this.activeCount >= (this.config.maxComments || 20)) return;
 
       const mode = this.config.displayMode || 'flow';
+      const { cleanText } = this.parseCommentCommands(rawText);
+      if (!cleanText) return;
 
       if (mode === 'left-fixed') {
         this.addLeftFixedComment(rawText, options);
@@ -135,13 +189,13 @@
       const endX = -textWidth - 100;
 
       const commentEl = document.createElement('div');
-      commentEl.className = 'nico-comment';
+      commentEl.className = 'komeflow-comment';
       commentEl.textContent = cleanText;
       commentEl.style.top = `${topY}px`;
       commentEl.style.fontSize = `${fontSize}px`;
       commentEl.style.color = options.isSuperChat ? '#ffd700' : color;
-      commentEl.style.setProperty('--nico-stroke-color', this.config.strokeColor);
-      commentEl.style.setProperty('--nico-stroke-width', `${this.config.strokeWidth}px`);
+      commentEl.style.setProperty('--komeflow-stroke-color', this.config.strokeColor);
+      commentEl.style.setProperty('--komeflow-stroke-width', `${this.config.strokeWidth}px`);
       commentEl.style.transform = `translate3d(${startX}px, 0, 0)`;
 
       this.overlay.appendChild(commentEl);
@@ -156,18 +210,14 @@
         lane: laneIndex
       };
 
-      const animation = commentEl.animate(
+      this.animateComment(
+        commentEl,
         [
           { transform: `translate3d(${startX}px, 0, 0)` },
           { transform: `translate3d(${endX}px, 0, 0)` }
         ],
         { duration: durationMs, easing: 'linear', fill: 'forwards' }
       );
-
-      animation.onfinish = () => {
-        if (commentEl.parentNode) commentEl.parentNode.removeChild(commentEl);
-        this.activeCount--;
-      };
     }
 
     addLeftFixedComment(rawText, options = {}) {
@@ -180,13 +230,13 @@
       const topY = laneIndex * laneHeight + 10;
 
       const commentEl = document.createElement('div');
-      commentEl.className = 'nico-comment mode-left-fixed';
+      commentEl.className = 'komeflow-comment mode-left-fixed';
       commentEl.textContent = cleanText;
       commentEl.style.top = `${topY}px`;
       commentEl.style.fontSize = `${fontSize}px`;
       commentEl.style.color = options.isSuperChat ? '#ffd700' : color;
-      commentEl.style.setProperty('--nico-stroke-color', this.config.strokeColor);
-      commentEl.style.setProperty('--nico-stroke-width', `${this.config.strokeWidth}px`);
+      commentEl.style.setProperty('--komeflow-stroke-color', this.config.strokeColor);
+      commentEl.style.setProperty('--komeflow-stroke-width', `${this.config.strokeWidth}px`);
 
       this.overlay.appendChild(commentEl);
       this.activeCount++;
@@ -197,7 +247,8 @@
         durationMs: durationMs
       };
 
-      const animation = commentEl.animate(
+      this.animateComment(
+        commentEl,
         [
           { transform: 'translate3d(-40px, 0, 0)', opacity: 0, offset: 0 },
           { transform: 'translate3d(0, 0, 0)', opacity: 1, offset: 0.1 },
@@ -206,11 +257,6 @@
         ],
         { duration: durationMs, easing: 'ease-out', fill: 'forwards' }
       );
-
-      animation.onfinish = () => {
-        if (commentEl.parentNode) commentEl.parentNode.removeChild(commentEl);
-        this.activeCount--;
-      };
     }
 
     addCenterFixedComment(rawText, options = {}) {
@@ -223,13 +269,13 @@
       const topY = laneIndex * laneHeight + 10;
 
       const commentEl = document.createElement('div');
-      commentEl.className = 'nico-comment mode-center-fixed';
+      commentEl.className = 'komeflow-comment mode-center-fixed';
       commentEl.textContent = cleanText;
       commentEl.style.top = `${topY}px`;
       commentEl.style.fontSize = `${fontSize}px`;
       commentEl.style.color = options.isSuperChat ? '#ffd700' : color;
-      commentEl.style.setProperty('--nico-stroke-color', this.config.strokeColor);
-      commentEl.style.setProperty('--nico-stroke-width', `${this.config.strokeWidth}px`);
+      commentEl.style.setProperty('--komeflow-stroke-color', this.config.strokeColor);
+      commentEl.style.setProperty('--komeflow-stroke-width', `${this.config.strokeWidth}px`);
 
       this.overlay.appendChild(commentEl);
       this.activeCount++;
@@ -240,7 +286,8 @@
         durationMs: durationMs
       };
 
-      const animation = commentEl.animate(
+      this.animateComment(
+        commentEl,
         [
           { opacity: 0, transform: 'translate3d(-50%, -10px, 0)', offset: 0 },
           { opacity: 1, transform: 'translate3d(-50%, 0, 0)', offset: 0.1 },
@@ -249,11 +296,6 @@
         ],
         { duration: durationMs, easing: 'ease-in-out', fill: 'forwards' }
       );
-
-      animation.onfinish = () => {
-        if (commentEl.parentNode) commentEl.parentNode.removeChild(commentEl);
-        this.activeCount--;
-      };
     }
 
     findOptimalLaneFlow(containerWidth, newWidth, newVelocity) {
@@ -332,7 +374,48 @@
   /* ==========================================================================
      Initialization & Messaging & Hidden Chat Frame Fallback
      ========================================================================== */
+  const DEFAULT_SETTINGS = {
+    enabled: true,
+    displayMode: 'flow',
+    maxComments: 20,
+    fontSize: 42,
+    flowDuration: 5.0,
+    displayArea: 1.0,
+    strokeColor: '#000000',
+    strokeWidth: 6,
+    opacity: 1.0,
+    timeShiftEnabled: false,
+    timeShiftConsentGranted: false
+  };
+
+  const MESSAGE_TTL_MS = 15000;
+  const MAX_SEEN_MESSAGES = 500;
+  const MAX_PENDING_COMMENTS = 50;
+  const TIME_SHIFT_MAX_ENTRIES = 50000;
+  const LIVE_EDGE_THRESHOLD_SECONDS = 8;
+  const REPLAY_LOOKAHEAD_SECONDS = 0.35;
+
   let engine = null;
+  let initRetryTimer = null;
+  let navigationTimer = null;
+  let chatSourceInterval = null;
+  let timeShiftTimer = null;
+  let timeShiftEnabled = false;
+  let timeShiftPreferenceEnabled = false;
+  let timeShiftConsentGranted = false;
+  let timeShiftVideo = null;
+  let timeShiftVideoId = '';
+  let timeShiftComments = [];
+  let timeShiftMessageIds = new Set();
+  let timeShiftReplayCursor = 0;
+  let timeShiftLastPlaybackTime = null;
+  let calibratedLiveMediaTime = null;
+  let calibratedLiveWallTime = null;
+  let wasTimeShifted = false;
+  let pendingBufferWrites = [];
+  let bufferFlushTimer = null;
+  const seenMessages = new Map();
+  const pendingComments = [];
 
   function getVideoId() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -346,58 +429,397 @@
    */
   function ensureChatSource() {
     const videoId = getVideoId();
-    if (!videoId) return;
+    const hiddenFrame = document.getElementById('komeflow-hidden-chatframe');
+    if (!videoId) {
+      hiddenFrame?.remove();
+      return;
+    }
+    initializeTimeShift(videoId);
 
     // Check if YouTube's own visible chat iframe exists
-    const visibleChatFrame = document.querySelector('iframe#chatframe');
+    const visibleChatFrame = document.querySelector('iframe#chatframe:not(#komeflow-hidden-chatframe)');
 
-    // If visible chat frame is missing (e.g. user collapsed/closed chat sidebar or in fullscreen)
-    if (!visibleChatFrame) {
-      let hiddenFrame = document.getElementById('niconico-hidden-chatframe');
-      if (!hiddenFrame) {
-        hiddenFrame = document.createElement('iframe');
-        hiddenFrame.id = 'niconico-hidden-chatframe';
-        hiddenFrame.style.cssText = 'display:none!important;width:0!important;height:0!important;border:none!important;visibility:hidden!important;position:absolute!important;left:-9999px!important;';
-        hiddenFrame.src = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}`;
-        document.body.appendChild(hiddenFrame);
-      }
-    }
-  }
-
-  function initOverlay() {
-    const playerContainer = document.querySelector('#movie_player') || document.querySelector('.html5-video-player') || document.querySelector('video')?.parentElement;
-    if (!playerContainer) {
-      setTimeout(initOverlay, 1000);
+    // Use exactly one chat source. Keeping both frames creates duplicate comments.
+    if (visibleChatFrame) {
+      hiddenFrame?.remove();
       return;
     }
 
-    let overlay = document.getElementById('niconico-comment-overlay');
+    // If visible chat frame is missing (e.g. user collapsed/closed chat sidebar or in fullscreen)
+    if (hiddenFrame?.dataset.videoId === videoId) return;
+    hiddenFrame?.remove();
+    if (!document.body) return;
+
+    const newHiddenFrame = document.createElement('iframe');
+    newHiddenFrame.id = 'komeflow-hidden-chatframe';
+    newHiddenFrame.dataset.videoId = videoId;
+    newHiddenFrame.title = 'YouTube live chat source';
+    newHiddenFrame.tabIndex = -1;
+    newHiddenFrame.setAttribute('aria-hidden', 'true');
+    newHiddenFrame.style.cssText = 'position:fixed!important;left:-10000px!important;top:-10000px!important;width:1px!important;height:1px!important;border:0!important;opacity:0!important;pointer-events:none!important;';
+    newHiddenFrame.src = `https://www.youtube.com/live_chat?v=${encodeURIComponent(videoId)}&embed_domain=${encodeURIComponent(window.location.hostname)}`;
+    document.body.appendChild(newHiddenFrame);
+  }
+
+  function scheduleInit(delay = 1000) {
+    clearTimeout(initRetryTimer);
+    initRetryTimer = setTimeout(initOverlay, delay);
+  }
+
+  function flushPendingComments() {
+    if (!engine) return;
+    while (pendingComments.length > 0) {
+      const comment = pendingComments.shift();
+      renderComment(comment);
+    }
+  }
+
+  function pruneSeenMessages(now) {
+    for (const [id, timestamp] of seenMessages) {
+      if (now - timestamp <= MESSAGE_TTL_MS && seenMessages.size <= MAX_SEEN_MESSAGES) break;
+      seenMessages.delete(id);
+    }
+  }
+
+  function renderComment(comment) {
+    if (!comment?.text) return;
+    if (engine) {
+      engine.addComment(comment.text, { isSuperChat: comment.isSuperChat });
+    } else {
+      pendingComments.push(comment);
+      if (pendingComments.length > MAX_PENDING_COMMENTS) pendingComments.shift();
+    }
+  }
+
+  function getLivePlaybackState(video = document.querySelector('video')) {
+    if (!video) return null;
+
+    let seekableEnd = video.currentTime;
+    if (video.seekable?.length) {
+      try {
+        seekableEnd = video.seekable.end(video.seekable.length - 1);
+      } catch (error) {}
+    }
+
+    const player = document.querySelector('#movie_player');
+    const liveBadge = player?.querySelector('.ytp-live-badge');
+    // YouTube no longer consistently exposes an infinite media duration or the
+    // legacy `ytp-live` class. Current DVR streams use `ytp-livebadge-color`
+    // while retaining a finite seekable window.
+    const isActiveLive = video.duration === Infinity ||
+      player?.classList.contains('ytp-live') ||
+      player?.classList.contains('ytp-livebadge-color');
+    const hasLiveHeadSignal = liveBadge?.classList.contains('ytp-live-badge-is-livehead') === true;
+    const isAtLiveEdge = hasLiveHeadSignal ||
+      (!liveBadge && Math.max(0, seekableEnd - video.currentTime) <= LIVE_EDGE_THRESHOLD_SECONDS);
+
+    // Some long-running YouTube streams expose a seekable end far ahead of the
+    // actual live head. Calibrate from YouTube's own live-head indicator and
+    // advance that media time using the wall clock while the viewer is rewound.
+    if (isAtLiveEdge) {
+      calibratedLiveMediaTime = video.currentTime;
+      calibratedLiveWallTime = Date.now();
+    }
+    const liveEdge = calibratedLiveMediaTime === null
+      ? seekableEnd
+      : calibratedLiveMediaTime + Math.max(0, Date.now() - calibratedLiveWallTime) / 1000;
+
+    return {
+      video,
+      isActiveLive,
+      isAtLiveEdge,
+      currentTime: video.currentTime,
+      liveEdge,
+      secondsBehindLive: Math.max(0, liveEdge - video.currentTime)
+    };
+  }
+
+  function lowerBoundCommentTime(playbackTime) {
+    let low = 0;
+    let high = timeShiftComments.length;
+    while (low < high) {
+      const middle = (low + high) >> 1;
+      if (timeShiftComments[middle].playbackTime < playbackTime) low = middle + 1;
+      else high = middle;
+    }
+    return low;
+  }
+
+  function resetReplayCursor(playbackTime, clearVisible = true) {
+    timeShiftReplayCursor = lowerBoundCommentTime(Math.max(0, playbackTime - 0.25));
+    timeShiftLastPlaybackTime = playbackTime - 0.25;
+    if (clearVisible) engine?.clearComments();
+  }
+
+  function mergeTimeShiftComments(entries) {
+    let requiresSort = false;
+    for (const entry of entries || []) {
+      if (!entry?.messageId || timeShiftMessageIds.has(entry.messageId)) continue;
+      if (!Number.isFinite(entry.playbackTime) || !entry.text) continue;
+      const previous = timeShiftComments[timeShiftComments.length - 1];
+      if (previous && entry.playbackTime < previous.playbackTime) requiresSort = true;
+      timeShiftMessageIds.add(entry.messageId);
+      timeShiftComments.push({
+        messageId: String(entry.messageId),
+        text: String(entry.text).slice(0, 500),
+        isSuperChat: entry.isSuperChat === true,
+        playbackTime: Number(entry.playbackTime),
+        receivedAt: Number(entry.receivedAt) || Date.now()
+      });
+    }
+
+    if (requiresSort) timeShiftComments.sort((a, b) => a.playbackTime - b.playbackTime);
+    if (timeShiftComments.length > TIME_SHIFT_MAX_ENTRIES) {
+      const removedCount = timeShiftComments.length - TIME_SHIFT_MAX_ENTRIES;
+      timeShiftComments.splice(0, removedCount);
+      timeShiftReplayCursor = Math.max(0, timeShiftReplayCursor - removedCount);
+      timeShiftMessageIds = new Set(timeShiftComments.map((comment) => comment.messageId));
+    }
+  }
+
+  function flushBufferWrites() {
+    clearTimeout(bufferFlushTimer);
+    bufferFlushTimer = null;
+    if (pendingBufferWrites.length === 0) return;
+
+    const entries = pendingBufferWrites.splice(0, 500);
+    chrome.runtime.sendMessage({ action: 'bufferComments', entries }).catch((error) => {
+      console.warn('KomeFlow: failed to persist time-shift comments', error);
+    });
+    if (pendingBufferWrites.length > 0) bufferFlushTimer = setTimeout(flushBufferWrites, 250);
+  }
+
+  function flushAllBufferWrites() {
+    clearTimeout(bufferFlushTimer);
+    bufferFlushTimer = null;
+    while (pendingBufferWrites.length > 0) {
+      const entries = pendingBufferWrites.splice(0, 500);
+      chrome.runtime.sendMessage({ action: 'bufferComments', entries }).catch((error) => {
+        console.warn('KomeFlow: failed to persist time-shift comments', error);
+      });
+    }
+  }
+
+  function queueBufferWrite(entry) {
+    pendingBufferWrites.push(entry);
+    if (pendingBufferWrites.length >= 100) {
+      flushBufferWrites();
+    } else if (!bufferFlushTimer) {
+      bufferFlushTimer = setTimeout(flushBufferWrites, 1000);
+    }
+  }
+
+  function loadTimeShiftComments(videoId) {
+    chrome.runtime.sendMessage({ action: 'loadBufferedComments', videoId }, (response) => {
+      if (chrome.runtime.lastError || response?.status !== 'ok' || videoId !== timeShiftVideoId) return;
+      mergeTimeShiftComments(response.comments);
+      const state = getLivePlaybackState(timeShiftVideo);
+      if (!state?.isActiveLive) return;
+      if (!state.isAtLiveEdge) {
+        wasTimeShifted = true;
+        resetReplayCursor(state.currentTime, false);
+      } else {
+        timeShiftReplayCursor = timeShiftComments.length;
+        timeShiftLastPlaybackTime = state.currentTime;
+      }
+    });
+  }
+
+  function handleVideoSeeking() {
+    const state = getLivePlaybackState(timeShiftVideo);
+    if (!timeShiftEnabled || !state?.isActiveLive) return;
+    wasTimeShifted = !state.isAtLiveEdge;
+    resetReplayCursor(state.currentTime);
+  }
+
+  function tickTimeShiftReplay() {
+    if (!timeShiftEnabled || !timeShiftVideo || timeShiftVideo.seeking) return;
+    const state = getLivePlaybackState(timeShiftVideo);
+    if (!state?.isActiveLive) return;
+
+    if (state.isAtLiveEdge) {
+      if (wasTimeShifted) engine?.clearComments();
+      wasTimeShifted = false;
+      timeShiftReplayCursor = timeShiftComments.length;
+      timeShiftLastPlaybackTime = state.currentTime;
+      return;
+    }
+
+    if (!wasTimeShifted) {
+      wasTimeShifted = true;
+      resetReplayCursor(state.currentTime);
+    }
+
+    if (timeShiftLastPlaybackTime === null ||
+        state.currentTime < timeShiftLastPlaybackTime - 0.75 ||
+        state.currentTime - timeShiftLastPlaybackTime > 3) {
+      resetReplayCursor(state.currentTime);
+    }
+
+    const windowStart = Math.max(0, timeShiftLastPlaybackTime - 0.1);
+    const windowEnd = state.currentTime + REPLAY_LOOKAHEAD_SECONDS;
+    while (timeShiftReplayCursor < timeShiftComments.length &&
+           timeShiftComments[timeShiftReplayCursor].playbackTime <= windowEnd) {
+      const comment = timeShiftComments[timeShiftReplayCursor++];
+      if (comment.playbackTime >= windowStart) renderComment(comment);
+    }
+    timeShiftLastPlaybackTime = state.currentTime;
+  }
+
+  function initializeTimeShift(videoId) {
+    const video = document.querySelector('video');
+    if (!video || !videoId) return;
+    if (timeShiftVideo === video && timeShiftVideoId === videoId) return;
+
+    if (timeShiftVideo) timeShiftVideo.removeEventListener('seeking', handleVideoSeeking);
+    clearInterval(timeShiftTimer);
+    timeShiftVideo = video;
+    timeShiftVideoId = videoId;
+    timeShiftComments = [];
+    timeShiftMessageIds = new Set();
+    timeShiftReplayCursor = 0;
+    timeShiftLastPlaybackTime = video.currentTime;
+    calibratedLiveMediaTime = null;
+    calibratedLiveWallTime = null;
+    wasTimeShifted = false;
+    timeShiftVideo.addEventListener('seeking', handleVideoSeeking);
+    timeShiftTimer = setInterval(tickTimeShiftReplay, 250);
+    loadTimeShiftComments(videoId);
+  }
+
+  function teardownTimeShift() {
+    flushAllBufferWrites();
+    clearInterval(timeShiftTimer);
+    timeShiftVideo?.removeEventListener('seeking', handleVideoSeeking);
+    timeShiftVideo = null;
+    timeShiftVideoId = '';
+    timeShiftComments = [];
+    timeShiftMessageIds.clear();
+    timeShiftReplayCursor = 0;
+    timeShiftLastPlaybackTime = null;
+    calibratedLiveMediaTime = null;
+    calibratedLiveWallTime = null;
+    wasTimeShifted = false;
+  }
+
+  function setTimeShiftAccess(preferenceEnabled, consentGranted, clearVisible = true) {
+    const previouslyEnabled = timeShiftEnabled;
+    timeShiftPreferenceEnabled = preferenceEnabled === true;
+    timeShiftConsentGranted = consentGranted === true;
+    timeShiftEnabled = timeShiftPreferenceEnabled && timeShiftConsentGranted;
+
+    if (timeShiftEnabled && !previouslyEnabled) {
+      handleVideoSeeking();
+    } else if (!timeShiftEnabled && previouslyEnabled) {
+      wasTimeShifted = false;
+      timeShiftReplayCursor = timeShiftComments.length;
+      timeShiftLastPlaybackTime = timeShiftVideo?.currentTime ?? null;
+      if (clearVisible) engine?.clearComments();
+    }
+  }
+
+  function acceptComment(data) {
+    if (!data || typeof data.text !== 'string') return false;
+    const text = data.text.trim().slice(0, 500);
+    if (!text) return false;
+    const currentVideoId = getVideoId();
+    if (data.videoId && currentVideoId && data.videoId !== currentVideoId) return true;
+
+    const now = Date.now();
+    const messageId = typeof data.messageId === 'string'
+      ? data.messageId.slice(0, 512)
+      : '';
+    if (messageId && seenMessages.has(messageId)) return true;
+    if (messageId) seenMessages.set(messageId, now);
+    pruneSeenMessages(now);
+
+    const comment = { text, isSuperChat: data.isSuperChat === true };
+    const playbackState = getLivePlaybackState(timeShiftVideo);
+    if (!timeShiftEnabled || !playbackState?.isActiveLive || !messageId) {
+      renderComment(comment);
+      return true;
+    }
+
+    const bufferedComment = {
+      videoId: currentVideoId,
+      messageId,
+      text,
+      isSuperChat: comment.isSuperChat,
+      playbackTime: playbackState.liveEdge,
+      receivedAt: now
+    };
+    mergeTimeShiftComments([bufferedComment]);
+    queueBufferWrite(bufferedComment);
+
+    if (playbackState.isAtLiveEdge) {
+      renderComment(comment);
+      timeShiftReplayCursor = timeShiftComments.length;
+      timeShiftLastPlaybackTime = playbackState.currentTime;
+    }
+    return true;
+  }
+
+  function initOverlay() {
+    initRetryTimer = null;
+    const playerContainer = document.querySelector('#movie_player') || document.querySelector('.html5-video-player') || document.querySelector('video')?.parentElement;
+    if (!playerContainer) {
+      scheduleInit();
+      return;
+    }
+
+    let overlay = document.getElementById('komeflow-comment-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
-      overlay.id = 'niconico-comment-overlay';
+      overlay.id = 'komeflow-comment-overlay';
       playerContainer.appendChild(overlay);
     }
 
+    if (engine && engine.container !== playerContainer) {
+      engine.destroy();
+      engine = null;
+    }
     if (!engine) {
       engine = new GPUCompositorEngine(overlay, playerContainer);
     }
 
-    if (chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(
-        { enabled: true, displayMode: 'flow', maxComments: 20, fontSize: 42, flowDuration: 5.0, displayArea: 1.0, strokeColor: '#000000', strokeWidth: 6, opacity: 1.0 },
-        (res) => { if (engine) engine.setConfig(res); }
+    initializeTimeShift(getVideoId());
+    chrome.storage.local.get(DEFAULT_SETTINGS, (settings) => {
+      if (chrome.runtime.lastError) {
+        console.warn('KomeFlow: failed to load settings', chrome.runtime.lastError.message);
+        return;
+      }
+      setTimeShiftAccess(
+        settings.timeShiftEnabled === true,
+        settings.timeShiftConsentGranted === true,
+        false
       );
-    }
+      if (engine) {
+        engine.setConfig(settings);
+        flushPendingComments();
+      }
+    });
 
     // Ensure background chat fetcher is running even if chat sidebar is closed!
     ensureChatSource();
   }
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (!request || typeof request.action !== 'string') return false;
     if (request.action === 'chatComment') {
-      if (engine) engine.addComment(request.text, { isSuperChat: request.isSuperChat });
-      sendResponse({ status: 'ok' });
+      const accepted = acceptComment(request);
+      sendResponse({ status: accepted ? 'ok' : 'invalid' });
     } else if (request.action === 'updateSettings') {
+      if (Object.hasOwn(request.settings || {}, 'timeShiftEnabled') ||
+          Object.hasOwn(request.settings || {}, 'timeShiftConsentGranted')) {
+        setTimeShiftAccess(
+          Object.hasOwn(request.settings || {}, 'timeShiftEnabled')
+            ? request.settings.timeShiftEnabled === true
+            : timeShiftPreferenceEnabled,
+          Object.hasOwn(request.settings || {}, 'timeShiftConsentGranted')
+            ? request.settings.timeShiftConsentGranted === true
+            : timeShiftConsentGranted
+        );
+      }
       if (engine) engine.setConfig(request.settings);
       sendResponse({ status: 'ok' });
     } else if (request.action === 'testComment') {
@@ -408,24 +830,60 @@
 
   window.addEventListener('message', (event) => {
     if (event.origin !== 'https://www.youtube.com') return;
-    if (event.data && event.data.type === '__niconico_chat_message__') {
-      if (engine) engine.addComment(event.data.text, { isSuperChat: event.data.isSuperChat });
+    const frames = [
+      document.querySelector('iframe#chatframe'),
+      document.getElementById('komeflow-hidden-chatframe')
+    ].filter(Boolean);
+    if (!frames.some((frame) => frame.contentWindow === event.source)) return;
+    if (event.data?.type !== '__komeflow_chat_message__') return;
+    acceptComment(event.data);
+  });
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local') return;
+    if (changes.timeShiftEnabled || changes.timeShiftConsentGranted) {
+      setTimeShiftAccess(
+        changes.timeShiftEnabled
+          ? changes.timeShiftEnabled.newValue === true
+          : timeShiftPreferenceEnabled,
+        changes.timeShiftConsentGranted
+          ? changes.timeShiftConsentGranted.newValue === true
+          : timeShiftConsentGranted
+      );
     }
+    if (!engine) return;
+    const changedSettings = {};
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+      if (changes[key]) changedSettings[key] = changes[key].newValue ?? DEFAULT_SETTINGS[key];
+    }
+    if (Object.keys(changedSettings).length > 0) engine.setConfig(changedSettings);
   });
 
   initOverlay();
 
   // Periodically ensure hidden chat source is active if sidebar was toggled
-  setInterval(ensureChatSource, 4000);
+  chatSourceInterval = setInterval(ensureChatSource, 4000);
+
+  function teardownPage() {
+    clearTimeout(initRetryTimer);
+    clearTimeout(navigationTimer);
+    teardownTimeShift();
+    engine?.destroy();
+    engine = null;
+    document.getElementById('komeflow-comment-overlay')?.remove();
+    document.getElementById('komeflow-hidden-chatframe')?.remove();
+    seenMessages.clear();
+    pendingComments.length = 0;
+  }
 
   window.addEventListener('yt-navigate-finish', () => {
-    window.__niconico_extension_injected = false;
-    engine = null;
-    const oldOverlay = document.getElementById('niconico-comment-overlay');
-    if (oldOverlay) oldOverlay.remove();
-    const oldHidden = document.getElementById('niconico-hidden-chatframe');
-    if (oldHidden) oldHidden.remove();
-    setTimeout(initOverlay, 800);
+    teardownPage();
+    navigationTimer = setTimeout(initOverlay, 800);
+  });
+
+  window.addEventListener('pagehide', () => {
+    teardownPage();
+    clearInterval(chatSourceInterval);
   });
 
 })();

@@ -1,0 +1,96 @@
+{
+  "extensionName": {
+    "message": "KomeFlow – 直播留言浮層",
+    "description": "擴充功能名稱"
+  },
+  "extensionDescription": {
+    "message": "在 YouTube 直播和影片上以捲動或固定方式顯示聊天室留言，並支援本機 DVR 同步。"
+  },
+  "mainToggleTitle": {
+    "message": "開啟 / 關閉留言浮層"
+  },
+  "displayModeLabel": {
+    "message": "顯示模式"
+  },
+  "modeFlow": {
+    "message": "從右向左捲動"
+  },
+  "modeLeftFixed": {
+    "message": "固定在左側"
+  },
+  "modeCenterFixed": {
+    "message": "固定在畫面中央"
+  },
+  "maxCommentsLabel": {
+    "message": "最大同時顯示數"
+  },
+  "commentsUnit": {
+    "message": "則"
+  },
+  "fontSizeLabel": {
+    "message": "字型大小"
+  },
+  "flowSpeedLabel": {
+    "message": "顯示時間 / 速度"
+  },
+  "secondsUnit": {
+    "message": "秒"
+  },
+  "screenAreaLabel": {
+    "message": "留言顯示範圍"
+  },
+  "screenAreaFull": {
+    "message": "整個畫面 (100%)"
+  },
+  "screenArea75": {
+    "message": "頂部 75%"
+  },
+  "screenArea50": {
+    "message": "頂部 50%"
+  },
+  "screenArea33": {
+    "message": "頂部 33%"
+  },
+  "timeShiftLabel": {
+    "message": "DVR 時移同步"
+  },
+  "timeShiftDescription": {
+    "message": "依照原始播放時間顯示儲存在本機的直播留言"
+  },
+  "timeShiftTitle": {
+    "message": "開啟 / 關閉 DVR 時移同步"
+  },
+  "timeShiftPrivacyNotice": {
+    "message": "啟用後，KomeFlow 會在裝置本機儲存影片 ID、聊天室文字、訊息 ID 與播放時間，最長六小時。資料不會傳送給開發者或第三方。"
+  },
+  "timeShiftConsentPrompt": {
+    "message": "要啟用 DVR 時移同步嗎？KomeFlow 會在裝置本機儲存影片 ID、聊天室文字、訊息 ID 與播放時間，最長六小時，且不會傳送給開發者或第三方。"
+  },
+  "clearDataButton": {
+    "message": "關閉 DVR 並刪除已儲存留言"
+  },
+  "clearingDataStatus": {
+    "message": "正在刪除已儲存留言…"
+  },
+  "clearDataSuccess": {
+    "message": "已刪除儲存的留言。"
+  },
+  "clearDataError": {
+    "message": "無法刪除儲存的留言，請再試一次。"
+  },
+  "strokeColorLabel": {
+    "message": "描邊顏色"
+  },
+  "strokeWidthLabel": {
+    "message": "描邊寬度"
+  },
+  "opacityLabel": {
+    "message": "不透明度"
+  },
+  "testCommentButton": {
+    "message": "顯示測試留言"
+  },
+  "legalNote": {
+    "message": "YouTube 是 Google LLC 的商標。KomeFlow 為獨立開發，並非 Google LLC 或 YouTube 的官方產品。"
+  }
+}
