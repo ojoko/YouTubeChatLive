@@ -394,11 +394,17 @@
   const TIME_SHIFT_MAX_ENTRIES = 50000;
   const LIVE_EDGE_THRESHOLD_SECONDS = 8;
   const REPLAY_LOOKAHEAD_SECONDS = 0.35;
+  const CHAT_FALLBACK_GRACE_MS = 3000;
+  const LIVE_CHAT_URL_PATTERN = /^https:\/\/www\.youtube\.com\/live_chat(?:_replay)?(?:[/?]|$)/;
 
   let engine = null;
   let initRetryTimer = null;
   let navigationTimer = null;
   let chatSourceInterval = null;
+  let activeVideoId = '';
+  let pageGeneration = 0;
+  let liveChatSeenVideoId = '';
+  let chatFrameUnavailableSince = 0;
   let timeShiftTimer = null;
   let timeShiftEnabled = false;
   let timeShiftPreferenceEnabled = false;
@@ -418,10 +424,57 @@
   const pendingComments = [];
 
   function getVideoId() {
+    if (window.location.pathname !== '/watch' &&
+        !/^\/live\/[a-zA-Z0-9_-]{11}(?:\/|$)/.test(window.location.pathname)) return '';
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('v')) return urlParams.get('v');
+    if (window.location.pathname === '/watch') {
+      const videoId = urlParams.get('v') || '';
+      return /^[a-zA-Z0-9_-]{11}$/.test(videoId) ? videoId : '';
+    }
     const match = window.location.pathname.match(/\/live\/([a-zA-Z0-9_-]{11})/);
     return match ? match[1] : '';
+  }
+
+  // Other <video> elements (e.g. home-feed inline previews) can precede the
+  // main player in document order.
+  function getMainVideo() {
+    return document.querySelector('#movie_player video.html5-main-video') ||
+      document.querySelector('#movie_player video') ||
+      document.querySelector('video');
+  }
+
+  function isExtensionContextValid() {
+    try {
+      return Boolean(chrome.runtime?.id);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function safeSendMessage(message, callback) {
+    if (!isExtensionContextValid()) return false;
+    try {
+      chrome.runtime.sendMessage(message, (response) => {
+        const error = chrome.runtime.lastError;
+        callback?.(error ? null : response, error);
+      });
+      return true;
+    } catch (error) {
+      callback?.(null, error);
+      return false;
+    }
+  }
+
+  // YouTube keeps #chatframe in the DOM while chat is collapsed (user-hidden or
+  // during ads) and points it at about:blank, so existence alone is not enough.
+  function isChatFrameLoaded(frame) {
+    if (!frame?.isConnected) return false;
+    if (frame.closest('ytd-live-chat-frame')?.hasAttribute('collapsed')) return false;
+    try {
+      return LIVE_CHAT_URL_PATTERN.test(frame.contentWindow?.location.href || '');
+    } catch (error) {
+      return LIVE_CHAT_URL_PATTERN.test(frame.src || '');
+    }
   }
 
   /**
@@ -436,18 +489,36 @@
     }
     initializeTimeShift(videoId);
 
-    // Check if YouTube's own visible chat iframe exists
+    // Regular videos have no chat frame; remember chat once seen so that
+    // layouts which temporarily drop it (e.g. fullscreen) keep the fallback.
+    // For ~2 s after an SPA navigation ytd-watch-flexy still carries the
+    // previous video's id and chat frame, so only trust it once it matches.
+    const watchFlexy = document.querySelector('ytd-watch-flexy');
+    const flexyVideoId = watchFlexy?.getAttribute('video-id');
+    if ((!flexyVideoId || flexyVideoId === videoId) && watchFlexy?.querySelector('ytd-live-chat-frame')) {
+      liveChatSeenVideoId = videoId;
+    }
+
     const visibleChatFrame = document.querySelector('iframe#chatframe:not(#komeflow-hidden-chatframe)');
 
     // Use exactly one chat source. Keeping both frames creates duplicate comments.
-    if (visibleChatFrame) {
+    if (isChatFrameLoaded(visibleChatFrame)) {
+      chatFrameUnavailableSince = 0;
+      hiddenFrame?.remove();
+      return;
+    }
+    if (liveChatSeenVideoId !== videoId) {
       hiddenFrame?.remove();
       return;
     }
 
-    // If visible chat frame is missing (e.g. user collapsed/closed chat sidebar or in fullscreen)
+    // Visible chat is collapsed, unloaded or missing (hidden sidebar, ads, fullscreen)
     if (hiddenFrame?.dataset.videoId === videoId) return;
     hiddenFrame?.remove();
+    // Give YouTube's own frame a moment to load before starting a second one.
+    const now = Date.now();
+    if (!chatFrameUnavailableSince) chatFrameUnavailableSince = now;
+    if (now - chatFrameUnavailableSince < CHAT_FALLBACK_GRACE_MS) return;
     if (!document.body) return;
 
     const newHiddenFrame = document.createElement('iframe');
@@ -491,8 +562,15 @@
     }
   }
 
-  function getLivePlaybackState(video = document.querySelector('video')) {
+  function getLivePlaybackState(video = getMainVideo()) {
     if (!video) return null;
+
+    const player = document.querySelector('#movie_player');
+    // Ads play in the same <video>; their currentTime is not stream time.
+    if (player?.classList.contains('ad-showing')) return null;
+    // No media loaded (player error, source switch): currentTime is 0 rather
+    // than stream time while the live-head badge may still be shown.
+    if (video.readyState === 0) return null;
 
     let seekableEnd = video.currentTime;
     if (video.seekable?.length) {
@@ -501,17 +579,17 @@
       } catch (error) {}
     }
 
-    const player = document.querySelector('#movie_player');
     const liveBadge = player?.querySelector('.ytp-live-badge');
     // YouTube no longer consistently exposes an infinite media duration or the
-    // legacy `ytp-live` class. Current DVR streams use `ytp-livebadge-color`
-    // while retaining a finite seekable window.
+    // legacy `ytp-live` class. `ytp-livebadge-color` is also set on regular
+    // videos, so rely on the live badge actually being displayed.
+    const isLiveBadgeShown = Boolean(liveBadge) && getComputedStyle(liveBadge).display !== 'none';
     const isActiveLive = video.duration === Infinity ||
       player?.classList.contains('ytp-live') ||
-      player?.classList.contains('ytp-livebadge-color');
+      isLiveBadgeShown;
     const hasLiveHeadSignal = liveBadge?.classList.contains('ytp-live-badge-is-livehead') === true;
     const isAtLiveEdge = hasLiveHeadSignal ||
-      (!liveBadge && Math.max(0, seekableEnd - video.currentTime) <= LIVE_EDGE_THRESHOLD_SECONDS);
+      (!isLiveBadgeShown && Math.max(0, seekableEnd - video.currentTime) <= LIVE_EDGE_THRESHOLD_SECONDS);
 
     // Some long-running YouTube streams expose a seekable end far ahead of the
     // actual live head. Calibrate from YouTube's own live-head indicator and
@@ -577,15 +655,22 @@
     }
   }
 
+  function sendBufferWrite(entries) {
+    // Callback form: promise-returning sendMessage needs Chrome 99+, while the
+    // manifest allows Chrome 93.
+    safeSendMessage({ action: 'bufferComments', entries }, (response, error) => {
+      if (error || response?.status !== 'ok') {
+        console.warn('KomeFlow: failed to persist time-shift comments', error?.message || response?.status);
+      }
+    });
+  }
+
   function flushBufferWrites() {
     clearTimeout(bufferFlushTimer);
     bufferFlushTimer = null;
     if (pendingBufferWrites.length === 0) return;
 
-    const entries = pendingBufferWrites.splice(0, 500);
-    chrome.runtime.sendMessage({ action: 'bufferComments', entries }).catch((error) => {
-      console.warn('KomeFlow: failed to persist time-shift comments', error);
-    });
+    sendBufferWrite(pendingBufferWrites.splice(0, 500));
     if (pendingBufferWrites.length > 0) bufferFlushTimer = setTimeout(flushBufferWrites, 250);
   }
 
@@ -593,10 +678,7 @@
     clearTimeout(bufferFlushTimer);
     bufferFlushTimer = null;
     while (pendingBufferWrites.length > 0) {
-      const entries = pendingBufferWrites.splice(0, 500);
-      chrome.runtime.sendMessage({ action: 'bufferComments', entries }).catch((error) => {
-        console.warn('KomeFlow: failed to persist time-shift comments', error);
-      });
+      sendBufferWrite(pendingBufferWrites.splice(0, 500));
     }
   }
 
@@ -610,8 +692,8 @@
   }
 
   function loadTimeShiftComments(videoId) {
-    chrome.runtime.sendMessage({ action: 'loadBufferedComments', videoId }, (response) => {
-      if (chrome.runtime.lastError || response?.status !== 'ok' || videoId !== timeShiftVideoId) return;
+    safeSendMessage({ action: 'loadBufferedComments', videoId }, (response) => {
+      if (response?.status !== 'ok' || videoId !== timeShiftVideoId) return;
       mergeTimeShiftComments(response.comments);
       const state = getLivePlaybackState(timeShiftVideo);
       if (!state?.isActiveLive) return;
@@ -667,11 +749,19 @@
   }
 
   function initializeTimeShift(videoId) {
-    const video = document.querySelector('video');
+    const video = getMainVideo();
     if (!video || !videoId) return;
     if (timeShiftVideo === video && timeShiftVideoId === videoId) return;
 
     if (timeShiftVideo) timeShiftVideo.removeEventListener('seeking', handleVideoSeeking);
+    if (timeShiftVideoId === videoId) {
+      // YouTube replaced the media element of the same stream: keep the
+      // in-memory buffer (it may hold entries not yet persisted).
+      timeShiftVideo = video;
+      timeShiftLastPlaybackTime = video.currentTime;
+      timeShiftVideo.addEventListener('seeking', handleVideoSeeking);
+      return;
+    }
     clearInterval(timeShiftTimer);
     timeShiftVideo = video;
     timeShiftVideoId = videoId;
@@ -723,6 +813,7 @@
     const text = data.text.trim().slice(0, 500);
     if (!text) return false;
     const currentVideoId = getVideoId();
+    if (!currentVideoId || currentVideoId !== activeVideoId) return true;
     if (data.videoId && currentVideoId && data.videoId !== currentVideoId) return true;
 
     const now = Date.now();
@@ -761,6 +852,9 @@
 
   function initOverlay() {
     initRetryTimer = null;
+    const videoId = getVideoId();
+    if (!videoId) return;
+    activeVideoId = videoId;
     const playerContainer = document.querySelector('#movie_player') || document.querySelector('.html5-video-player') || document.querySelector('video')?.parentElement;
     if (!playerContainer) {
       scheduleInit();
@@ -774,7 +868,7 @@
       playerContainer.appendChild(overlay);
     }
 
-    if (engine && engine.container !== playerContainer) {
+    if (engine && (engine.container !== playerContainer || engine.overlay !== overlay)) {
       engine.destroy();
       engine = null;
     }
@@ -782,22 +876,30 @@
       engine = new GPUCompositorEngine(overlay, playerContainer);
     }
 
-    initializeTimeShift(getVideoId());
-    chrome.storage.local.get(DEFAULT_SETTINGS, (settings) => {
-      if (chrome.runtime.lastError) {
-        console.warn('KomeFlow: failed to load settings', chrome.runtime.lastError.message);
-        return;
-      }
-      setTimeShiftAccess(
-        settings.timeShiftEnabled === true,
-        settings.timeShiftConsentGranted === true,
-        false
-      );
-      if (engine) {
-        engine.setConfig(settings);
-        flushPendingComments();
-      }
-    });
+    initializeTimeShift(videoId);
+    const generation = pageGeneration;
+    try {
+      chrome.storage.local.get(DEFAULT_SETTINGS, (settings) => {
+        if (generation !== pageGeneration || videoId !== getVideoId()) return;
+        if (chrome.runtime.lastError) {
+          console.warn('KomeFlow: failed to load settings', chrome.runtime.lastError.message);
+          return;
+        }
+        setTimeShiftAccess(
+          settings.timeShiftEnabled === true,
+          settings.timeShiftConsentGranted === true,
+          false
+        );
+        if (engine) {
+          engine.setConfig(settings);
+          flushPendingComments();
+        }
+      });
+    } catch (error) {
+      // The extension was reloaded or removed; this script is orphaned.
+      shutdownOrphanedScript();
+      return;
+    }
 
     // Ensure background chat fetcher is running even if chat sidebar is closed!
     ensureChatSource();
@@ -861,10 +963,38 @@
 
   initOverlay();
 
-  // Periodically ensure hidden chat source is active if sidebar was toggled
-  chatSourceInterval = setInterval(ensureChatSource, 4000);
+  // URL and attachment checks recover even when YouTube omits a navigation
+  // event or replaces the player after yt-navigate-finish.
+  function reconcilePage() {
+    if (!isExtensionContextValid()) {
+      shutdownOrphanedScript();
+      return;
+    }
+    const videoId = getVideoId();
+    if (videoId !== activeVideoId) {
+      teardownPage();
+      if (videoId) initOverlay();
+      return;
+    }
+    if (!videoId) return;
+    if (!engine || !engine.container.isConnected || !engine.overlay.isConnected) {
+      initOverlay();
+    } else {
+      ensureChatSource();
+    }
+  }
+
+  function startPageMonitor() {
+    clearInterval(chatSourceInterval);
+    chatSourceInterval = setInterval(reconcilePage, 1000);
+  }
+  startPageMonitor();
 
   function teardownPage() {
+    pageGeneration++;
+    activeVideoId = '';
+    liveChatSeenVideoId = '';
+    chatFrameUnavailableSince = 0;
     clearTimeout(initRetryTimer);
     clearTimeout(navigationTimer);
     teardownTimeShift();
@@ -876,14 +1006,32 @@
     pendingComments.length = 0;
   }
 
-  window.addEventListener('yt-navigate-finish', () => {
+  // Stops all work once the extension context is gone (extension reloaded,
+  // updated or removed) instead of throwing from every timer tick.
+  function shutdownOrphanedScript() {
+    clearInterval(chatSourceInterval);
+    chatSourceInterval = null;
+    pendingBufferWrites.length = 0;
     teardownPage();
-    navigationTimer = setTimeout(initOverlay, 800);
+  }
+
+  window.addEventListener('yt-navigate-finish', () => {
+    // reconcilePage tears down only when the video actually changed; the
+    // delayed pass catches a player that is swapped in after the event.
+    reconcilePage();
+    clearTimeout(navigationTimer);
+    navigationTimer = setTimeout(reconcilePage, 800);
   });
 
   window.addEventListener('pagehide', () => {
     teardownPage();
     clearInterval(chatSourceInterval);
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted || !isExtensionContextValid()) return;
+    reconcilePage();
+    startPageMonitor();
   });
 
 })();

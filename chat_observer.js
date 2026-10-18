@@ -14,6 +14,8 @@
   let observedContainer = null;
   const processedComments = new Set();
   const HEALTH_CHECK_INTERVAL_MS = 2000;
+  const TEXT_RETRY_LIMIT = 4;
+  const TEXT_RETRY_DELAY_MS = 250;
 
   function getChatContainer() {
     return document.querySelector('yt-live-chat-item-list-renderer #items') ||
@@ -48,6 +50,23 @@
     }
   }
 
+  // YouTube's own chat frame URL carries only a continuation token. Its
+  // initial data names the stream ("topic":"chat~<videoId>"), which lets the
+  // page drop messages from the previous video's chat right after SPA
+  // navigation. Unknown stays '' and is accepted as before.
+  let cachedChatVideoId = null;
+  function getChatVideoId() {
+    if (cachedChatVideoId !== null) return cachedChatVideoId;
+    const fromUrl = new URLSearchParams(window.location.search).get('v') || '';
+    if (/^[a-zA-Z0-9_-]{11}$/.test(fromUrl)) return (cachedChatVideoId = fromUrl);
+    for (const script of document.querySelectorAll('script:not([src])')) {
+      const match = script.textContent.match(/"topic":"chat~([a-zA-Z0-9_-]{11})"/);
+      if (match) return (cachedChatVideoId = match[1]);
+    }
+    if (document.readyState === 'complete') cachedChatVideoId = '';
+    return '';
+  }
+
   function hashMessageKey(value) {
     let hash = 2166136261;
     for (let index = 0; index < value.length; index++) {
@@ -57,7 +76,7 @@
     return (hash >>> 0).toString(36);
   }
 
-  function processChatNode(node) {
+  function processChatNode(node, attempt = 0) {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
 
     let text = '';
@@ -65,7 +84,14 @@
     if (msgEl) text = msgEl.innerText || msgEl.textContent || '';
 
     text = text.trim().slice(0, 500);
-    if (!text) return;
+    if (!text) {
+      // Renderers can be attached before their data is stamped; the observer
+      // only watches childList of #items, so re-check the node shortly.
+      if (attempt < TEXT_RETRY_LIMIT && node.isConnected) {
+        setTimeout(() => processChatNode(node, attempt + 1), TEXT_RETRY_DELAY_MS);
+      }
+      return;
+    }
 
     const author = (node.querySelector('#author-name')?.textContent || '').trim().slice(0, 100);
     const timestamp = (node.querySelector('#timestamp')?.textContent || '').trim().slice(0, 30);
@@ -82,7 +108,7 @@
 
     const tagName = node.tagName?.toLowerCase() || '';
     const isSuperChat = tagName.includes('paid') || tagName.includes('superchat');
-    const videoId = new URLSearchParams(window.location.search).get('v') || '';
+    const videoId = getChatVideoId();
 
     relayComment({
       action: 'newChatMessage',

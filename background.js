@@ -162,8 +162,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.action === 'bufferComments' || message?.action === 'loadBufferedComments') {
-    const isTrustedWatchPage = /^https:\/\/www\.youtube\.com\/(?:watch(?:[/?]|$)|live\/)/.test(senderUrl);
-    if (!isTrustedWatchPage || sender.frameId !== 0) {
+    // sender.url is the URL the document was loaded with, so after YouTube's
+    // SPA navigation (home/search -> watch) it is not a watch URL. Accept the
+    // top frame of any YouTube page; videoId is validated per entry.
+    const isTrustedYouTubePage = /^https:\/\/www\.youtube\.com\//.test(senderUrl);
+    if (!isTrustedYouTubePage || sender.frameId !== 0) {
       sendResponse({ status: 'invalid' });
       return false;
     }
