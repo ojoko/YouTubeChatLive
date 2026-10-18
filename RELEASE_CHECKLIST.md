@@ -1,58 +1,58 @@
-# KomeFlow release checklist
+# KomeFlow 公開チェックリスト
 
-## Repository
+## リポジトリ
 
-- [ ] Review all local changes.
-- [ ] Choose and add a software license.
-- [ ] Commit version `1.7.0`.
-- [ ] Push the release commit to GitHub.
-- [ ] Confirm `README.md` and `PRIVACY.md` are publicly accessible.
-- [ ] Create a Git tag and GitHub release if desired.
+- [ ] ローカルの変更をすべて確認する。
+- [ ] ソフトウェアライセンスを決めて追加する。
+- [ ] バージョン `1.7.0` をコミットする。
+- [ ] リリース用のコミットをGitHubへプッシュする。
+- [ ] `README.md` と `PRIVACY.md` が公開状態で閲覧できることを確認する。
+- [ ] 必要に応じてGitタグとGitHubリリースを作成する。
 
-## Functional QA
+## 動作確認
 
-- [ ] Live position: new comments flow immediately.
-- [ ] DVR: consent is required before local storage begins.
-- [ ] DVR: comments replay after a 30-second rewind.
-- [ ] DVR: “Disable DVR and delete saved comments” succeeds.
-- [ ] Archived chat replay displays comments.
-- [ ] Chat-disabled and members-only streams fail gracefully.
-- [ ] Sidebar open, closed, theater mode, and fullscreen.
-- [ ] SPA navigation between two YouTube videos.
-- [ ] Multiple YouTube tabs.
-- [ ] English, Japanese, Korean, Simplified Chinese, and Traditional Chinese popup layouts.
+- [ ] ライブ位置：新しいコメントがすぐに流れる。
+- [ ] DVR：端末内への保存を始める前に同意を求める。
+- [ ] DVR：30秒巻き戻した後にコメントが再表示される。
+- [ ] DVR：「DVRを無効化して保存コメントを削除」が成功する。
+- [ ] アーカイブのチャットリプレイでコメントが表示される。
+- [ ] チャット無効の配信やメンバー限定配信で、エラーにならず動作する。
+- [ ] サイドバーの表示・非表示、シアターモード、全画面表示。
+- [ ] YouTubeの2本の動画間でのSPA遷移。
+- [ ] 複数のYouTubeタブ。
+- [ ] 英語、日本語、韓国語、中国語（簡体字・繁体字）でのポップアップのレイアウト。
 
-## Chrome Web Store account
+## Chromeウェブストアのアカウント
 
-- [ ] Developer registration fee paid.
-- [ ] Publisher name and contact email completed.
-- [ ] Contact email verified.
-- [ ] Two-step verification enabled.
+- [ ] デベロッパー登録料を支払う。
+- [ ] 公開者名と連絡先メールアドレスを入力する。
+- [ ] 連絡先メールアドレスを確認済みにする。
+- [ ] 2段階認証を有効にする。
 
-## Store listing
+## ストア掲載情報
 
-- [ ] Upload `store-assets/store-icon-128.png`.
-- [ ] Upload both 1280×800 screenshots.
-- [ ] Upload `store-assets/small-promo-440x280.png`.
-- [ ] Optionally upload `store-assets/marquee-1400x560.png`.
-- [ ] Enter localized listing text from `STORE_LISTING.md`.
-- [ ] Select a category.
-- [ ] Add homepage, support, and privacy policy URLs.
-- [ ] Confirm all screenshots and copy avoid implying YouTube affiliation.
+- [ ] `store-assets/store-icon-128.png` をアップロードする。
+- [ ] 1280×800のスクリーンショット2枚をアップロードする。
+- [ ] `store-assets/small-promo-440x280.png` をアップロードする。
+- [ ] 必要に応じて `store-assets/marquee-1400x560.png` をアップロードする。
+- [ ] `STORE_LISTING.md` の各言語の掲載文を入力する。
+- [ ] カテゴリを選ぶ。
+- [ ] ホームページ、サポート、プライバシーポリシーのURLを追加する。
+- [ ] スクリーンショットと掲載文が、YouTubeとの提携を示唆していないことを確認する。
 
-## Privacy practices
+## プライバシーへの取り組み
 
-- [ ] Enter the single-purpose statement from `STORE_LISTING.md`.
-- [ ] Justify `storage` and `youtube.com` access.
-- [ ] Declare that no remote code is used.
-- [ ] Disclose locally processed website/user-generated content.
-- [ ] Certify Limited Use compliance.
-- [ ] Confirm the dashboard disclosure exactly matches `PRIVACY.md`.
+- [ ] `STORE_LISTING.md` の「単一用途」の説明を入力する。
+- [ ] `storage` 権限と `youtube.com` へのアクセスが必要な理由を記入する。
+- [ ] リモートコードを使用していないことを申告する。
+- [ ] 端末内で処理するウェブサイトのコンテンツ／ユーザー生成コンテンツを開示する。
+- [ ] 制限付き使用（Limited Use）への準拠を証明する。
+- [ ] ダッシュボードの開示内容が `PRIVACY.md` と完全に一致することを確認する。
 
-## Package and submission
+## パッケージと提出
 
-- [ ] Run `scripts/package.ps1`.
-- [ ] Confirm the ZIP contains `manifest.json` at its root.
-- [ ] Load the packaged files as an unpacked extension for a final smoke test.
-- [ ] Upload the ZIP to the developer dashboard.
-- [ ] Use deferred publishing for the first review if a controlled launch is preferred.
+- [ ] `scripts/package.ps1` を実行する。
+- [ ] ZIPのルートに `manifest.json` があることを確認する。
+- [ ] パッケージ化したファイルを「パッケージ化されていない拡張機能」として読み込み、最終確認を行う。
+- [ ] ZIPをデベロッパーダッシュボードにアップロードする。
+- [ ] 公開時期を管理したい場合は、初回審査で「公開を延期」を使う。

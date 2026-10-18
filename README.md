@@ -1,54 +1,60 @@
 # KomeFlow – Live Comment Overlay
 
-KomeFlow displays YouTube live chat and chat replay comments directly over the video. Comments can flow from right to left or remain fixed on screen.
+KomeFlowは、YouTubeのライブチャットとチャットリプレイのコメントを動画の上に直接表示するChrome拡張機能です。コメントを右から左へ流すことも、画面上に固定表示することもできます。
 
-> KomeFlow is independently developed and is not affiliated with, endorsed by, or sponsored by Google LLC or YouTube.
+> KomeFlowは独立して開発されたものであり、Google LLCおよびYouTubeとは提携しておらず、承認や後援も受けていません。
 
-## Features
+## 機能
 
-- Flowing, left-fixed, and center-fixed comment modes
-- Adjustable comment count, font size, speed, display area, outline, and opacity
-- Optional DVR time-shift synchronization for comments collected while a live stream is open
-- Local-only settings and DVR buffer
-- Japanese, English, Korean, Simplified Chinese, and Traditional Chinese interfaces
-- YouTube single-page navigation and fullscreen-compatible overlay
+- 流れる表示、左側固定、中央固定のコメント表示モード
+- 表示数、文字サイズ、速度、表示範囲、縁取り、透明度の調整
+- ライブ配信を開いている間に取得したコメントを巻き戻し位置に合わせて再表示する、任意のDVRタイムシフト同期
+- 設定とDVRバッファは端末内にのみ保存
+- 日本語、英語、韓国語、中国語（簡体字・繁体字）のUI
+- YouTubeのSPA遷移と全画面表示に対応したオーバーレイ
 
-## Privacy
+## プライバシー
 
-KomeFlow does not operate a developer server and does not sell or transmit user data to the developer or third parties.
+KomeFlowは開発者のサーバーを運用しておらず、ユーザーデータを販売したり、開発者や第三者へ送信したりすることはありません。
 
-The optional DVR feature stores video IDs, chat text, message IDs, Super Chat status, playback positions, and reception timestamps in extension-scoped IndexedDB. It is disabled by default and requires explicit consent. The buffer is capped at 50,000 records; records older than six hours are removed when the buffer is next accessed. Users can disable DVR and delete the buffer from the popup.
+任意のDVR機能は、動画ID、チャット本文、メッセージID、スーパーチャットかどうか、再生位置、受信時刻を拡張機能専用のIndexedDBに保存します。初期状態では無効で、明示的な同意が必要です。保存件数の上限は50,000件で、6時間を過ぎた記録は次にバッファへアクセスしたときに削除されます。ポップアップからDVRを無効化し、保存したコメントを削除できます。
 
-See [PRIVACY.md](PRIVACY.md) for the complete policy.
+詳しくは[PRIVACY.md](PRIVACY.md)をご覧ください。
 
-## Local installation
+## ローカルへのインストール
 
-1. Open `chrome://extensions/`.
-2. Enable **Developer mode**.
-3. Choose **Load unpacked**.
-4. Select this repository directory.
-5. Reload an existing YouTube tab after reloading the extension.
+1. `chrome://extensions/` を開きます。
+2. **デベロッパー モード**をオンにします。
+3. **パッケージ化されていない拡張機能を読み込む**を選びます。
+4. このリポジトリのフォルダを選択します。
+5. 拡張機能を再読み込みした後は、開いているYouTubeのタブも再読み込みしてください。
 
-## Build the release package
+## 公開用パッケージの作成
 
-Run:
+次のコマンドを実行します。
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\package.ps1
 ```
 
-The Chrome Web Store ZIP is written to `release/`. Store listing graphics are in `store-assets/`.
+ChromeウェブストアにアップロードするZIPは `release/` に出力されます。ストア掲載用の画像は `store-assets/` にあります。
 
-## Supported pages
+## テスト
 
-- `https://www.youtube.com/watch*`
-- `https://www.youtube.com/live/*`
-- YouTube live chat and chat replay frames used by those pages
+```powershell
+node tests/lifecycle.test.cjs
+```
 
-## Support
+## 対応ページ
 
-Report bugs and request features through the repository’s [GitHub Issues](https://github.com/ojoko/YouTubeChatLive/issues).
+- `https://www.youtube.com/*` で起動し、ホームや検索結果からのSPA遷移を検知します
+- コメントの表示とチャットの取得は `https://www.youtube.com/watch*` と `https://www.youtube.com/live/*` でのみ行います
+- これらのページが使用するYouTubeのライブチャットおよびチャットリプレイのフレーム
 
-## License
+## サポート
 
-Copyright © 2026 ojoko. All rights reserved. Copying, modification, redistribution, resale, and creation of derivative works are prohibited without prior written permission. See [LICENSE](LICENSE).
+不具合の報告や機能の要望は、リポジトリの[GitHub Issues](https://github.com/ojoko/YouTubeChatLive/issues)にお寄せください。
+
+## ライセンス
+
+Copyright © 2026 ojoko. All rights reserved. 事前の書面による許可なく、複製、改変、再配布、再販売、二次的著作物の作成を行うことを禁じます。詳しくは[LICENSE](LICENSE)をご覧ください。

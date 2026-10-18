@@ -1,26 +1,44 @@
-# Chrome Web Store listing copy
+# Chromeウェブストア掲載文
 
-## Dashboard fields
+## ダッシュボードの入力項目
 
-**Category:** Accessibility or Tools
+各項目は日本語訳を上に、ダッシュボードへ英語で入力する場合の原文を「英語原文」として下に記載しています。
 
-**Single purpose**
+**カテゴリ：** ユーザー補助 または ツール
 
-> Display YouTube live chat and chat replay comments as configurable on-video overlays, including optional locally stored DVR time-shift synchronization.
+**単一用途**
 
-**Permission justification — storage**
+> YouTubeのライブチャットとチャットリプレイのコメントを、設定可能なオーバーレイとして動画上に表示します。端末内に保存する任意のDVRタイムシフト同期を含みます。
 
-> Stores the user’s visual preferences and explicit DVR consent choice. Optional DVR comment records are stored separately in extension-scoped IndexedDB.
+英語原文: Display YouTube live chat and chat replay comments as configurable on-video overlays, including optional locally stored DVR time-shift synchronization.
 
-**Permission justification — youtube.com**
+**権限が必要な理由 — storage**
 
-> Required to read live-chat content in YouTube’s chat frames and render the user-visible comment overlay on supported watch and live pages.
+> ユーザーの表示設定と、DVRに対する明示的な同意の状態を保存します。任意のDVRコメント記録は、拡張機能専用のIndexedDBに別途保存します。
 
-**Remote code**
+英語原文: Stores the user’s visual preferences and explicit DVR consent choice. Optional DVR comment records are stored separately in extension-scoped IndexedDB.
 
-> No. KomeFlow does not download or execute remote code.
+**権限が必要な理由 — youtube.com**
 
-**Data disclosure**
+> YouTubeのチャットフレーム内のライブチャットを読み取り、対応する視聴ページとライブページでユーザーに見えるコメントのオーバーレイを描画するために必要です。
+
+英語原文: Required to read live-chat content in YouTube’s chat frames and render the user-visible comment overlay on supported watch and live pages.
+
+**リモートコード**
+
+> いいえ。KomeFlowはリモートコードをダウンロードも実行もしません。
+
+英語原文: No. KomeFlow does not download or execute remote code.
+
+**データの開示**
+
+- ウェブサイトのコンテンツ：オーバーレイに必要なYouTubeの動画IDとライブチャットの本文。
+- ユーザー生成コンテンツ：YouTubeのライブチャットから処理するチャット本文とメッセージID。
+- 端末内への保存のみ：任意のDVR記録は、明示的にオプトインした後にのみ保存。
+- 販売、広告利用、開発者によるアクセス、第三者への転送は行わない。
+- 保存期間：DVR記録は最大50,000件。6時間を過ぎた記録は、次にバッファへアクセスしたときに削除。
+
+英語原文:
 
 - Website content: YouTube video IDs and live-chat message text required for the overlay.
 - User-generated content: chat text and message identifiers processed from YouTube live chat.
@@ -28,17 +46,21 @@
 - No sale, advertising use, developer access, or third-party transfer.
 - Retention: maximum 50,000 DVR records; records older than six hours are deleted on the next buffer access.
 
-**Privacy policy URL after pushing this repository**
+**プライバシーポリシーのURL（このリポジトリをプッシュした後）**
 
 > https://github.com/ojoko/YouTubeChatLive/blob/master/PRIVACY.md
 
-**Homepage**
+**ホームページ**
 
 > https://github.com/ojoko/YouTubeChatLive
 
-**Support**
+**サポート**
 
 > https://github.com/ojoko/YouTubeChatLive/issues
+
+## 各言語の掲載文
+
+以下はストアの各言語の掲載欄にそのまま入力する文面のため、各言語のまま記載しています。
 
 ## English
 
